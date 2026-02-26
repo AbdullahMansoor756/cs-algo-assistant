@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model weights (too large for GitHub)
+models/base/*
+models/checkpoints/*
+!models/base/.gitkeep
+!models/checkpoints/.gitkeep
+
+# Large data files
+data/raw/*
+data/cleaned/*
+data/processed/*
+!data/raw/.gitkeep
+!data/cleaned/.gitkeep
+!data/processed/.gitkeep
+
+# Outputs
+outputs/logs/*
+outputs/results/*
+outputs/samples/*
+!outputs/logs/.gitkeep
+!outputs/results/.gitkeep
+!outputs/samples/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# WandB
+wandb/
+
+# HuggingFace cache
+.cache/
