@@ -1,1 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS Algorithm Q&A Assistant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
 
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #7c3aed, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 40px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 16px;
+            background: #1e1e2e;
+            border: 1px solid #7c3aed;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+
+        button {
+            margin-top: 16px;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #7c3aed, #3b82f6);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .answer-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #1e1e2e;
+            border-radius: 12px;
+            border-left: 4px solid #7c3aed;
+            line-height: 1.8;
+            font-size: 1rem;
+            display: none;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            text-align: center;
+            color: #7c3aed;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .examples {
+            margin-top: 30px;
+        }
+
+        .examples h3 {
+            color: #888;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .example-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chip {
+            padding: 8px 16px;
+            background: #1e1e2e;
+            border: 1px solid #333;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #aaa;
+            transition: all 0.2s;
+        }
+
+        .chip:hover {
+            border-color: #7c3aed;
+            color: #fff;
+        }
+
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background: #1e1e2e;
+            border: 1px solid #333;
+        }
+
+        .status.online { border-color: #22c55e; color: #22c55e; }
+        .status.offline { border-color: #ef4444; color: #ef4444; }
+    </style>
+</head>
+<body>
+
+<div class="status" id="status">⚪ Checking...</div>
+
+<h1>🤖 CS Algorithm Assistant</h1>
+<p class="subtitle">Ask anything about Data Structures & Algorithms</p>
+
+<div class="container">
+    <textarea id="question" placeholder="e.g. What is binary search? Explain quicksort. What is a linked list?"></textarea>
+    <button onclick="askQuestion()" id="btn">Ask Question</button>
+
+    <div class="loading" id="loading">⏳ Thinking... (this may take 15-30 seconds)</div>
+    <div class="answer-box" id="answer"></div>
+
+    <div class="examples">
+        <h3>Try these examples</h3>
+        <div class="example-chips">
+            <div class="chip" onclick="setQuestion('What is binary search and what is its time complexity?')">Binary Search</div>
+            <div class="chip" onclick="setQuestion('Explain quicksort algorithm')">Quicksort</div>
+            <div class="chip" onclick="setQuestion('What is a linked list?')">Linked List</div>
+            <div class="chip" onclick="setQuestion('What is the difference between BFS and DFS?')">BFS vs DFS</div>
+            <div class="chip" onclick="setQuestion('Explain dynamic programming with an example')">Dynamic Programming</div>
+            <div class="chip" onclick="setQuestion('What is a hash table?')">Hash Table</div>
+            <div class="chip" onclick="setQuestion('What is a binary tree?')">Binary Tree</div>
+            <div class="chip" onclick="setQuestion('Explain merge sort')">Merge Sort</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'https://slimy-garrett-nongrievously.ngrok-free.dev';
+
+    // Check if API is online
+    async function checkStatus() {
+        try {
+            const res = await fetch(API_URL + '/health');
+            const data = await res.json();
+            if (data.status === 'online') {
+                document.getElementById('status').className = 'status online';
+                document.getElementById('status').textContent = '🟢 Model Online';
+            }
+        } catch {
+            document.getElementById('status').className = 'status offline';
+            document.getElementById('status').textContent = '🔴 Model Offline';
+        }
+    }
+
+    function setQuestion(q) {
+        document.getElementById('question').value = q;
+    }
+
+    async function askQuestion() {
+        const question = document.getElementById('question').value.trim();
+        if (!question) return;
+
+        const btn = document.getElementById('btn');
+        const loading = document.getElementById('loading');
+        const answerBox = document.getElementById('answer');
+
+        btn.disabled = true;
+        loading.style.display = 'block';
+        answerBox.style.display = 'none';
+
+        try {
+            const res = await fetch(API_URL + '/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question })
+            });
+            const data = await res.json();
+            answerBox.textContent = data.answer;
+            answerBox.style.display = 'block';
+        } catch (err) {
+            answerBox.textContent = '❌ Model is offline. Please start the Colab notebook first.';
+            answerBox.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            loading.style.display = 'none';
+        }
+    }
+
+    // Allow Enter key to submit
+    document.getElementById('question').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.ctrlKey) askQuestion();
+    });
+
+    checkStatus();
+    setInterval(checkStatus, 30000);
+</script>
+
+</body>
+</html>
